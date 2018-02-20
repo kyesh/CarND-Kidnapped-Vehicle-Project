@@ -43,6 +43,8 @@ void ParticleFilter::init(double x, double y, double theta, double std[]) {
 		particles.push_back(p);
 	}
 
+	is_initialized = true;
+
 }
 
 void ParticleFilter::prediction(double delta_t, double std_pos[], double velocity, double yaw_rate) {
@@ -52,9 +54,9 @@ void ParticleFilter::prediction(double delta_t, double std_pos[], double velocit
 	//  http://www.cplusplus.com/reference/random/default_random_engine/
 
         default_random_engine gen;
-        normal_distribution<double> dist_x(0, std[0]);
-        normal_distribution<double> dist_y(0, std[1]);
-        normal_distribution<double> dist_theta(0, std[2]);
+        normal_distribution<double> dist_x(0, std_pos[0]);
+        normal_distribution<double> dist_y(0, std_pos[1]);
+        normal_distribution<double> dist_theta(0, std_pos[2]);
 
 	for(int i =0; i < num_particles; i++){
 
@@ -93,7 +95,7 @@ void ParticleFilter::updateWeights(double sensor_range, double std_landmark[],
 	//   3.33
 	//   http://planning.cs.uiuc.edu/node99.html
 	int b_assoc;
-	double b_sense_x, b_sense_y, t_sense_x, t_sesns_y, minDist, d, x_diff, y_diff, expon;
+	double b_sense_x, b_sense_y, t_sense_x, t_sense_y, minDist, d, x_diff, y_diff, expon;
 	double gauss_norm = (1/(2 * M_PI * std_landmark[0] * std_landmark[1]));
 	for(int i = 0; i < num_particles; i++){
 		particles[i].weight = 1;
@@ -104,7 +106,7 @@ void ParticleFilter::updateWeights(double sensor_range, double std_landmark[],
 			b_assoc = 0;
 			for(int k =0; k<map_landmarks.landmark_list.size(); k++){
 				t_sense_x = particles[i].x + (cos(particles[i].theta) * observations[j].x) - (sin(particles[i].theta) * observations[j].y);
-				t_sesns_y = particles[i].y + (sin(particles[i].theta) * observations[j].x) + (cos(particles[i].theta) * observations[j].y);
+				t_sense_y = particles[i].y + (sin(particles[i].theta) * observations[j].x) + (cos(particles[i].theta) * observations[j].y);
 				d = dist(map_landmarks.landmark_list[k].x_f, map_landmarks.landmark_list[k].y_f, t_sense_x, t_sense_y);
 				if(d<minDist){
 					minDist = d;
@@ -117,12 +119,12 @@ void ParticleFilter::updateWeights(double sensor_range, double std_landmark[],
 			particles[i].sense_x.push_back(b_sense_x);
 			particles[i].sense_y.push_back(b_sense_y);
 			particles[i].associations.push_back(b_assoc);
-			x_diff = particles[i].sense_x - map_landmarks.landmark_list[b_assoc].x_f;
-			y_diff = particles[i].sense_y - map_landmarks.landmark_list[b_assoc].y_f;
+			x_diff = b_sense_x - map_landmarks.landmark_list[b_assoc].x_f;
+			y_diff = b_sense_y - map_landmarks.landmark_list[b_assoc].y_f;
 			expon = ((x_diff*x_diff)/(2*std_landmark[0]*std_landmark[0])) + ((y_diff*y_diff)/(2*std_landmark[1]*std_landmark[1]));
 			particles[i].weight *=  (gauss_norm*exp(expon));
 		}
-		particles.weights[i] = particles[i].weight;
+		weights[i] = particles[i].weight;
 	}
 }
 
@@ -132,10 +134,10 @@ void ParticleFilter::resample() {
 	//   http://en.cppreference.com/w/cpp/numeric/random/discrete_distribution
 	std::vector<Particle> newParticles;
 	default_random_engine gen;
-	std::discrete_distribution<> d(particles.weights.begin(),particles.weights.end());
-	for(int i = 0; i < num_particles; i++)(
+	std::discrete_distribution<> d(weights.begin(),weights.end());
+	for(int i = 0; i < num_particles; i++){
 		newParticles.push_back(particles[d(gen)]);
-	)
+	}
 	particles = newParticles;
 }
 
