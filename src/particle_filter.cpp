@@ -59,7 +59,7 @@ void ParticleFilter::prediction(double delta_t, double std_pos[], double velocit
         normal_distribution<double> dist_theta(0, std_pos[2]*4);
 
 	for(int i =0; i < num_particles; i++){
-
+		//I used simplier movement model approximation to save on computation costs
 		particles[i].theta = particles[i].theta + yaw_rate*delta_t;
 		particles[i].x = particles[i].x + cos(particles[i].theta)*delta_t;
 		particles[i].y = particles[i].y + sin(particles[i].theta)*delta_t;
