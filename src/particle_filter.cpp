@@ -54,9 +54,9 @@ void ParticleFilter::prediction(double delta_t, double std_pos[], double velocit
 	//  http://www.cplusplus.com/reference/random/default_random_engine/
 
         default_random_engine gen;
-        normal_distribution<double> dist_x(0, std_pos[0]);
-        normal_distribution<double> dist_y(0, std_pos[1]);
-        normal_distribution<double> dist_theta(0, std_pos[2]);
+        normal_distribution<double> dist_x(0, std_pos[0]*2);
+        normal_distribution<double> dist_y(0, std_pos[1]*2);
+        normal_distribution<double> dist_theta(0, std_pos[2]*2);
 
 	for(int i =0; i < num_particles; i++){
 
@@ -94,17 +94,22 @@ void ParticleFilter::updateWeights(double sensor_range, double std_landmark[],
 	//   and the following is a good resource for the actual equation to implement (look at equation 
 	//   3.33
 	//   http://planning.cs.uiuc.edu/node99.html
+	weights.clear();
 	int b_assoc;
 	double b_sense_x, b_sense_y, t_sense_x, t_sense_y, minDist, d, x_diff, y_diff, expon;
 	double gauss_norm = (1/(2 * M_PI * std_landmark[0] * std_landmark[1]));
+//	cout << "Variables Declard" << endl;
 	for(int i = 0; i < num_particles; i++){
 		particles[i].weight = 1;
+	//	cout << "\t Particle: " << i << endl;
 		for(int j = 0; j < observations.size(); j++){
 			minDist = 999999999999;
 			b_sense_x = 0;
 			b_sense_y = 0;
 			b_assoc = 0;
+	//		cout << "\t\t Initialized Observation: " << j  << " of: " << observations.size()  << endl;
 			for(int k =0; k<map_landmarks.landmark_list.size(); k++){
+	//			cout << "\t\t\t LandMark: " << k << endl;
 				t_sense_x = particles[i].x + (cos(particles[i].theta) * observations[j].x) - (sin(particles[i].theta) * observations[j].y);
 				t_sense_y = particles[i].y + (sin(particles[i].theta) * observations[j].x) + (cos(particles[i].theta) * observations[j].y);
 				d = dist(map_landmarks.landmark_list[k].x_f, map_landmarks.landmark_list[k].y_f, t_sense_x, t_sense_y);
@@ -113,18 +118,25 @@ void ParticleFilter::updateWeights(double sensor_range, double std_landmark[],
 					b_sense_x = t_sense_x;
 					b_sense_y = t_sense_y;
 					b_assoc = k;
+	//				cout << "\t\t\t\t Updated LandMark" << endl;
 				}
 				
 			}
+	//		cout << "\t\t Before Saving closest point" << endl;
 			particles[i].sense_x.push_back(b_sense_x);
 			particles[i].sense_y.push_back(b_sense_y);
 			particles[i].associations.push_back(b_assoc);
 			x_diff = b_sense_x - map_landmarks.landmark_list[b_assoc].x_f;
 			y_diff = b_sense_y - map_landmarks.landmark_list[b_assoc].y_f;
 			expon = ((x_diff*x_diff)/(2*std_landmark[0]*std_landmark[0])) + ((y_diff*y_diff)/(2*std_landmark[1]*std_landmark[1]));
-			particles[i].weight *=  (gauss_norm*exp(expon));
+			particles[i].weight *=  (gauss_norm*exp(-expon));
+	//		cout << "\t\t gauss_norm:" << gauss_norm << endl;
+	//		cout << "\t\t expon: " << expon << endl;
+	//		cout << "\t\t Weight After current obs:" << particles[i].weight << endl;
 		}
-		weights[i] = particles[i].weight;
+		
+		weights.push_back(particles[i].weight);
+	//	cout << "\t weights reassigned" << endl;
 	}
 }
 
