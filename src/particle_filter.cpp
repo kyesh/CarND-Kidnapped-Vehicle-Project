@@ -123,9 +123,9 @@ void ParticleFilter::updateWeights(double sensor_range, double std_landmark[],
 				
 			}
 	//		cout << "\t\t Before Saving closest point" << endl;
-			particles[i].sense_x.push_back(b_sense_x);
-			particles[i].sense_y.push_back(b_sense_y);
-			particles[i].associations.push_back(b_assoc);
+			//particles[i].sense_x.push_back(b_sense_x);
+			//particles[i].sense_y.push_back(b_sense_y);
+			//particles[i].associations.push_back(b_assoc);
 			x_diff = b_sense_x - map_landmarks.landmark_list[b_assoc].x_f;
 			y_diff = b_sense_y - map_landmarks.landmark_list[b_assoc].y_f;
 			expon = ((x_diff*x_diff)/(2*std_landmark[0]*std_landmark[0])) + ((y_diff*y_diff)/(2*std_landmark[1]*std_landmark[1]));
